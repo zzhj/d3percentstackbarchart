@@ -1,4 +1,4 @@
-"age","Other payment method","Account-to-account transfer","PayPal","Online banking bill payment","Bank account number payment","Prepaid/gift/EBT card","Credit card"," Debit card"," Money order","Check","Cash"
+"group","Other payment method","Account-to-account transfer","PayPal","Online banking bill payment","Bank account number payment","Prepaid/gift/EBT card","Credit card"," Debit card"," Money order","Check","Cash"
 "(65,109]",8,8,1,210,94,1,113,65,4,146,21
 "(55,65]",7,7,3,204,84,7,83,149,19,141,32
 "(45,55]",1,8,3,159,70,4,55,134,6,67,41
