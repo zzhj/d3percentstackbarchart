@@ -1,0 +1,115 @@
+---
+title: "data"
+author: "Hanjuan Zhang"
+date: "4/7/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library('magrittr')
+library('mi')
+library(ggplot2)
+library(plyr)
+library(ggridges)
+library(forcats)
+library(dplyr)
+```
+
+## loading data
+```{r}
+inddf <- read.csv(file = 'dcpc_2019_indlevel_public-csv.csv')
+testdf <- inddf[, c('paypref_b1', 'paypref_b1_why', 'paypref_nb1', 'paypref_nb1_why', 'paypref_lt10', 'paypref_10to25', 'paypref_25to50', 'paypref_50to100', 'paypref_100plus', 'hh_size', 'income_hh', 'homeowner', 'home_value', 'home_debt', 'other_assets', 'other_debts', 'ind_weight', 'gender', 'age', 'highest_education', 'race_white', 'race_black', 'race_asian', 'race_other')]
+housholddf <- inddf[,c('paypref_b1', 'paypref_b1_why', 'paypref_nb1', 'paypref_nb1_why', 'paypref_lt10', 'paypref_10to25', 'paypref_25to50', 'paypref_50to100', 'paypref_100plus', 'hh_size', 'income_hh', 'homeowner', 'home_value', 'home_debt', 'other_assets', 'other_debts', 'ind_weight')] 
+```
+
+## data wash
+### NA
+```{r}
+new_housholddf <- testdf[!is.na(testdf$income_hh),]
+new_housholddf <- new_housholddf[!is.na(new_housholddf$paypref_nb1),]
+colSums(is.na(new_housholddf)) %>%  
+  sort(decreasing = TRUE)
+head(new_housholddf)
+```
+
+
+### washing paypref
+```{r}
+#cols <- c('paypref_b1', 'paypref_b1_why', 'paypref_nb1', 'paypref_nb1_why', 'paypref_lt10', 'paypref_10to25', 'paypref_25to50', 'paypref_50to100', 'paypref_100plus')
+
+#new_housholddf[c('paypref_b1', 'paypref_nb1')] <- lapply(new_housholddf[c('paypref_b1', 'paypref_nb1')],factor)
+
+new_housholddf$paypref_b1 <- mapvalues(new_housholddf$paypref_b1,
+                           from = c(1,2,3,4,5,6,7,8,9,10,11,12,13),
+                           to = c("Cash", "Check", "Credit card", " Debit card", "Prepaid/gift/EBT card", "Bank account number payment", "Online banking bill payment", " Money order", "Traveler’s check", "PayPal", "Account-to-account transfer", "Mobile phone payment", "Other payment method"))
+
+new_housholddf$paypref_nb1 <- mapvalues(new_housholddf$paypref_nb1,
+                           from = c(1,2,3,4,5,6,7,8,9,10,11,12,13),
+                           to = c("Cash", "Check", "Credit card", " Debit card", "Prepaid/gift/EBT card", "Bank account number payment", "Online banking bill payment", " Money order", "Traveler’s check", "PayPal", "Account-to-account transfer", "Mobile phone payment", "Other payment method"))
+
+new_housholddf$paypref_lt10 <- mapvalues(new_housholddf$paypref_lt10,
+                           from = c(1,2,3,4,5,6,7,8,9,10,11,12,13,NA),
+                           to = c("Cash", "Check", "Credit card", " Debit card", "Prepaid/gift/EBT card", "Bank account number payment", "Online banking bill payment", " Money order", "Traveler’s check", "PayPal", "Account-to-account transfer", "Mobile phone payment", "Other payment method",NA))
+
+new_housholddf$paypref_10to25 <- mapvalues(new_housholddf$paypref_10to25,
+                           from = c(1,2,3,4,5,6,7,8,9,10,11,12,13,NA),
+                           to = c("Cash", "Check", "Credit card", " Debit card", "Prepaid/gift/EBT card", "Bank account number payment", "Online banking bill payment", " Money order", "Traveler’s check", "PayPal", "Account-to-account transfer", "Mobile phone payment", "Other payment method",NA))
+
+new_housholddf$paypref_25to50 <- mapvalues(new_housholddf$paypref_25to50,
+                           from = c(1,2,3,4,5,6,7,8,9,10,11,12,13,NA),
+                           to = c("Cash", "Check", "Credit card", " Debit card", "Prepaid/gift/EBT card", "Bank account number payment", "Online banking bill payment", " Money order", "Traveler’s check", "PayPal", "Account-to-account transfer", "Mobile phone payment", "Other payment method",NA))
+
+new_housholddf$paypref_50to100 <- mapvalues(new_housholddf$paypref_50to100,
+                           from = c(1,2,3,4,5,6,7,8,9,10,11,12,13,NA),
+                           to = c("Cash", "Check", "Credit card", " Debit card", "Prepaid/gift/EBT card", "Bank account number payment", "Online banking bill payment", " Money order", "Traveler’s check", "PayPal", "Account-to-account transfer", "Mobile phone payment", "Other payment method",NA))
+
+new_housholddf$paypref_100plus <- mapvalues(new_housholddf$paypref_100plus,
+                           from = c(1,2,3,4,5,6,7,8,9,10,11,12,13,NA),
+                           to = c("Cash", "Check", "Credit card", " Debit card", "Prepaid/gift/EBT card", "Bank account number payment", "Online banking bill payment", " Money order", "Traveler’s check", "PayPal", "Account-to-account transfer", "Mobile phone payment", "Other payment method",NA))
+
+new_housholddf$paypref_b1 <- factor(new_housholddf$paypref_b1, levels = rev(c("Cash", "Check", " Money order", " Debit card", "Credit card", "Prepaid/gift/EBT card", "Bank account number payment", "Online banking bill payment", "Traveler’s check", "PayPal", "Account-to-account transfer", "Mobile phone payment", "Other payment method")))
+new_housholddf$paypref_nb1 <- factor(new_housholddf$paypref_nb1, levels = rev(c("Cash", "Check", " Money order", " Debit card", "Credit card", "Prepaid/gift/EBT card", "Bank account number payment", "Online banking bill payment", "Traveler’s check", "PayPal", "Account-to-account transfer", "Mobile phone payment", "Other payment method")))
+new_housholddf$paypref_lt10 <- factor(new_housholddf$paypref_lt10, levels = rev(c("Cash", "Check", " Money order", " Debit card", "Credit card", "Prepaid/gift/EBT card", "Bank account number payment", "Online banking bill payment", "Traveler’s check", "PayPal", "Account-to-account transfer", "Mobile phone payment", "Other payment method", NA)))
+new_housholddf$paypref_10to25 <- factor(new_housholddf$paypref_10to25, levels = rev(c("Cash", "Check", " Money order", " Debit card", "Credit card", "Prepaid/gift/EBT card", "Bank account number payment", "Online banking bill payment", "Traveler’s check", "PayPal", "Account-to-account transfer", "Mobile phone payment", "Other payment method", NA)))
+new_housholddf$paypref_25to50 <- factor(new_housholddf$paypref_25to50, levels = rev(c("Cash", "Check", " Money order", " Debit card", "Credit card", "Prepaid/gift/EBT card", "Bank account number payment", "Online banking bill payment", "Traveler’s check", "PayPal", "Account-to-account transfer", "Mobile phone payment", "Other payment method", NA)))
+new_housholddf$paypref_50to100 <- factor(new_housholddf$paypref_50to100, levels = rev(c("Cash", "Check", " Money order", " Debit card", "Credit card", "Prepaid/gift/EBT card", "Bank account number payment", "Online banking bill payment", "Traveler’s check", "PayPal", "Account-to-account transfer", "Mobile phone payment", "Other payment method", NA)))
+new_housholddf$paypref_100plus <- factor(new_housholddf$paypref_100plus, levels = rev(c("Cash", "Check", " Money order", " Debit card", "Credit card", "Prepaid/gift/EBT card", "Bank account number payment", "Online banking bill payment", "Traveler’s check", "PayPal", "Account-to-account transfer", "Mobile phone payment", "Other payment method", NA)))
+head(new_housholddf)
+```
+
+
+### age vs paypref
+
+```{r}
+agedf <- new_housholddf
+agedf$age <- cut(agedf$age, breaks = c(18, 25, 35, 45, 55, 65 , 109), include.lowest = TRUE)
+agedf$age <- factor(agedf$age, levels = rev(levels(agedf$age)))
+str(agedf)
+
+df <- agedf %>% count(paypref_b1, age)
+ggplot(df, aes(y=paypref_b1, x=n, fill=age)) + 
+  geom_bar(position = "fill", stat="identity") +
+  scale_fill_brewer(palette="RdBu")
+df1 <- agedf %>% count(paypref_nb1, age)
+ggplot(df1, aes(y=paypref_nb1, x=n, fill=age)) + 
+  geom_bar(position = "fill", stat="identity") +
+  scale_fill_brewer(palette="RdBu")
+
+
+ggplot(df, aes(y=age, x=n, fill=paypref_b1)) + 
+  geom_bar(position = "fill", stat="identity") +
+  scale_fill_brewer(palette="RdBu")
+```
+```{r} 
+df1 <- tidyr::pivot_wider(data = df, id_cols = c(age), names_from = paypref_b1, values_from = n, values_fn = sum)
+df1[is.na(df1)] = 0
+df1
+```
+
+```{r}
+write.csv(df1,"2019_age_payprefb1.csv", row.names = FALSE)
+```
