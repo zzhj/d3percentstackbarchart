@@ -1,4 +1,5 @@
 <html>
+<meta charset="utf-8">
 <!-- Load d3.js -->
 <script src="https://d3js.org/d3.v6.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.25.6/d3-legend.min.js"></script>
@@ -6,8 +7,8 @@
 
 
 <!-- Create a div where the graph will take place -->
+<p>Changes of payment choice over time in the age group: <select id="selectButton"></select></p>
 <div id="my_dataviz"></div>
-<meta charset="utf-8">
 
 
 <head>
@@ -31,84 +32,101 @@ var svg = d3.select("#my_dataviz")
   .append("g")
     .attr("transform",
           "translate(" + margin.left + "," + margin.top + ")");
+          
+var allGroup = ["18-25", "25-35", "35-45", "45-55", "55-65", "65-109"];
+d3.select("#selectButton")
+      .selectAll('myOptions')
+     	.data(allGroup)
+      .enter()
+    	.append('option')
+      .text(function (d) { return d; }) // text showed in the menu
+      .attr("value", function (d) { return d; }); // corresponding value returned by the button
+
+update("https://raw.githubusercontent.com/zzhj/d3percentstackbarchart/main/data/age_18-25.csv")
+
+d3.select("#selectButton").on("change", function(d) {
+        // recover the option that has been chosen
+        var selectedOption = d3.select(this).property("value")
+        // run the updateChart function with this selected option
+        var datapath = "https://raw.githubusercontent.com/zzhj/d3percentstackbarchart/main/data/age_" + selectedOption + ".csv"
+        update(datapath)
+    })
 
 // Parse the Data
-d3.csv("https://raw.githubusercontent.com/zzhj/d3percentstackbarchart/main/2019_age_payprefb1.csv").then(function(data) {
-
-  // List of subgroups = header of the csv files = soil condition here
-  var subgroups = data.columns.slice(1)
-
-  // List of groups = species here = value of the first column called group -> I show them on the X axis
-  var groups = d3.map(data,function(d){return(d.group)})
-
-  // Add X axis
-  var x = d3.scaleBand()
-      .domain(groups)
-      .range([0, width])
-      .padding([0.2])
-  svg.append("g")
-    .attr("transform", "translate(0," + height + ")")
-    .call(d3.axisBottom(x).tickSizeOuter(0));
-
-  // Add Y axis
-  var y = d3.scaleLinear()
-    .domain([0, 100])
-    .range([ height, 0 ]);
-  svg.append("g")
-    .call(d3.axisLeft(y));
-     
-
-  // color palette = one color per subgroup
-  var color = d3.scaleOrdinal()
-    .domain(subgroups)
-    .range(d3.schemeRdBu[11])
-    .unknown("#ccc")
+function update(datapath) {
+  d3.csv(datapath).then(function(data) {
+    svg.selectAll("*").remove();
+  
+    // List of subgroups = header of the csv files = soil condition here
+    var subgroups = data.columns.slice(1)
+  
+    // List of groups = species here = value of the first column called group -> I show them on the X axis
+    var groups = d3.map(data,function(d){return(d.group)})
+  
+    // Add X axis
+    var x = d3.scaleBand()
+        .domain(groups)
+        .range([0, width])
+        .padding([0.2])
+    svg.append("g")
+      .attr("transform", "translate(0," + height + ")")
+      .call(d3.axisBottom(x).tickSizeOuter(0));
+  
+    // Add Y axis
+    var y = d3.scaleLinear()
+      .domain([0, 100])
+      .range([ height, 0 ]);
+    svg.append("g")
+      .call(d3.axisLeft(y));
+       
+    // color palette = one color per subgroup
+    var color = d3.scaleOrdinal()
+      .domain(subgroups)
+      .range(["#441d03","#67001f","#b2182b","#d6604d","#f4a582","#fddbc7","#f7f7f7","#d1e5f0","#92c5de","#4393c3","#2166ac","#053061","#04002e"])
+      
+      
+    var legend = d3.legendColor()
+      .title("Payment Choice")
+      .titleWidth(100)
+      .scale(color);
+  
+    // Normalize the data -> sum of each group must be 100!
+    dataNormalized = []
+    data.forEach(function(d){
+      // Compute the total
+      tot = 0
+      for (i in subgroups){ name=subgroups[i] ; tot += +d[name] }
+      // Now normalize
+      for (i in subgroups){ name=subgroups[i] ; d[name] = d[name] / tot * 100}
+    })
+  
+    //stack the data? --> stack per subgroup
+    var stackedData = d3.stack()
+      .keys(subgroups)
+      (data)
     
-  var legend = d3.legendColor()
-    .title("Color Legend")
-    .titleWidth(100)
-    .scale(color);
-
-  
-
-  // Normalize the data -> sum of each group must be 100!
-  console.log(data)
-  dataNormalized = []
-  data.forEach(function(d){
-    // Compute the total
-    tot = 0
-    for (i in subgroups){ name=subgroups[i] ; tot += +d[name] }
-    // Now normalize
-    for (i in subgroups){ name=subgroups[i] ; d[name] = d[name] / tot * 100}
+    
+    // Show the bars
+    svg.append("g")
+      .selectAll("g")
+      // Enter in the stack data = loop key per key = group per group
+      .data(stackedData)
+      .enter().append("g")
+        .attr("fill", function(d) { return color(d.key); })
+        .selectAll("rect")
+        // enter a second time = loop subgroup per subgroup to add all rectangles
+        .data(function(d) { return d; })
+        .enter().append("rect")
+          .attr("x", function(d) { return x(d.data.group); })
+          .attr("y", function(d) { return y(d[1]); })
+          .attr("height", function(d) { return y(d[0]) - y(d[1]); })
+          .attr("width",x.bandwidth())
+          
+    svg.append("g")
+      .attr("transform", "translate(460,10)")
+      .call(legend)
   })
-
-  //stack the data? --> stack per subgroup
-  var stackedData = d3.stack()
-    .keys(subgroups)
-    (data)
-  
-  
-  // Show the bars
-  svg.append("g")
-    .selectAll("g")
-    // Enter in the stack data = loop key per key = group per group
-    .data(stackedData)
-    .enter().append("g")
-      .attr("fill", function(d) { return color(d.key); })
-      .selectAll("rect")
-      // enter a second time = loop subgroup per subgroup to add all rectangles
-      .data(function(d) { return d; })
-      .enter().append("rect")
-        .attr("x", function(d) { return x(d.data.group); })
-        .attr("y", function(d) { return y(d[1]); })
-        .attr("height", function(d) { return y(d[0]) - y(d[1]); })
-        .attr("width",x.bandwidth())
-        
-  svg.append("g")
-    .attr("transform", "translate(460,10)")
-    .call(legend)
-        
-})
+}
 
 </script>
 </html>
