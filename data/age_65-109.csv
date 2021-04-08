@@ -1,4 +1,4 @@
-"year","Other payment method","Mobile phone payment","Account-to-account transfer","PayPal","Online banking bill payment","Bank account number payment","Prepaid/gift/EBT card","Credit card","Debit card","Money order","Check","Cash"
+"group","Other payment method","Mobile phone payment","Account-to-account transfer","PayPal","Online banking bill payment","Bank account number payment","Prepaid/gift/EBT card","Credit card","Debit card","Money order","Check","Cash"
 "2019",8,0,8,1,212,96,1,113,65,4,149,21
 "2018",4,4,8,0,152,67,0,82,64,1,149,21
 "2017",3,3,4,3,142,53,0,76,54,1,140,13
