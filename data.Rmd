@@ -167,27 +167,6 @@ df$age <- factor(df$age, levels = rev(levels(df$age)))
 ```
 
 ```{r}
-df1 <- df[df["paypref_b1"] == "Cash",]
-head(df1)
-df1 <- df1 %>% count(year, age)
-ggplot(df1, aes(y=year, x=n, fill=age)) + 
-  geom_bar(position = "fill", stat="identity") +
-  scale_fill_brewer(palette="Set3") 
-
-df1 <- df[df["paypref_b1"] == "Check",]
-head(df1)
-df1 <- df1 %>% count(year, age)
-ggplot(df1, aes(y=year, x=n, fill=age)) + 
-  geom_bar(position = "fill", stat="identity") +
-  scale_fill_brewer(palette="Set3") 
-
-df2 <- df[df["age"] == "[18,25]",]
-head(df2)
-df2 <- df2 %>% count(year, paypref_b1)
-ggplot(df2, aes(y=year, x=n, fill=paypref_b1)) + 
-  geom_bar(position = "fill", stat="identity") +
-  scale_fill_brewer(palette="Set3")
-
 df3 <- df[df["age"] == "(65,109]",]
 head(df3)
 df3 <- df3 %>% count(year, paypref_b1)
@@ -199,11 +178,14 @@ ggplot(df3, aes(y=year, x=n, fill=paypref_b1)) +
 
 
 ```{r} 
+#col_order <- rev(c("Cash", "Check", "Money order", "Debit card", "Credit card", "Prepaid/gift/EBT card", "Bank account number payment", "Online banking bill payment", "Traveler’s check", "PayPal", "Account-to-account transfer", "Mobile phone payment", "Other payment method"))
+col_order <- rev(c("Cash", "Check", "Money order", "Debit card", "Credit card", "Prepaid/gift/EBT card", "Bank account number payment", "Online banking bill payment", "PayPal", "Account-to-account transfer", "Mobile phone payment", "Other payment method", "year"))
 new_df <- tidyr::pivot_wider(data = df3, id_cols = c(year), names_from = paypref_b1, values_from = n, values_fn = sum)
 new_df[is.na(new_df)] = 0
+new_df <- new_df[, col_order]
 new_df
 ```
 
 ```{r}
-write.csv(new_df,"age_65-109.csv", row.names = FALSE)
+write.csv(new_df,"data/age_65-109.csv", row.names = FALSE)
 ```
