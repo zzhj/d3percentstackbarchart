@@ -1,9 +1,9 @@
 <html>
 <meta charset="utf-8">
+
 <!-- Load d3.js -->
 <script src="https://d3js.org/d3.v6.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.25.6/d3-legend.min.js"></script>
-
 
 
 <!-- Create a div where the graph will take place -->
@@ -106,6 +106,30 @@ function update(datapath) {
       (data)
     
     
+    // ----------------
+    // Highlight a specific subgroup when hovered
+    // ----------------
+    var mouseover = function(event, d) {
+    // what subgroup are we hovering?
+    var subgroupName = d3.select(this.parentNode).datum().key; // This was the tricky part
+    subgroupName = subgroupName.split(" ").join("");
+    subgroupName = subgroupName.split("/").join("");
+    // Reduce opacity of all rect to 0.2
+    d3.selectAll(".myRect").style("opacity", 0.2)
+    // Highlight all rects of this subgroup with opacity 0.8. It is possible to select them since they have a specific class = their name.
+    d3.selectAll("."+subgroupName)
+      .style("opacity", 1)
+      .style("stroke-width", 3)
+    }
+
+  // When user do not hover anymore
+  var mouseleave = function(event,d) {
+    // Back to normal opacity: 0.8
+    d3.selectAll(".myRect")
+      .style("opacity",1)
+      .style("stroke-width", 0)
+    }
+    
     // Show the bars
     svg.append("g")
       .selectAll("g")
@@ -113,6 +137,10 @@ function update(datapath) {
       .data(stackedData)
       .enter().append("g")
         .attr("fill", function(d) { return color(d.key); })
+        .attr("class", function(d){ 
+        var t = d.key.split(" ").join("");
+        return "myRect " +  t.split("/").join(""); }) // Add a class to each subgroup: their name
+        .style("stroke-width", 0)
         .selectAll("rect")
         // enter a second time = loop subgroup per subgroup to add all rectangles
         .data(function(d) { return d; })
@@ -121,6 +149,10 @@ function update(datapath) {
           .attr("y", function(d) { return y(d[1]); })
           .attr("height", function(d) { return y(d[0]) - y(d[1]); })
           .attr("width",x.bandwidth())
+          .attr("stroke", "grey")
+        .on("mouseover", mouseover)
+        .on("mouseleave", mouseleave)
+  
           
     svg.append("g")
       .attr("transform", "translate(460,10)")
